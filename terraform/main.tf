@@ -58,6 +58,7 @@ resource "azurerm_kubernetes_cluster" "platform" {
   dns_prefix                = "${var.project_prefix}-aks"
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
+
   network_profile {
     network_plugin    = "azure"
     load_balancer_sku = "standard"
@@ -65,6 +66,7 @@ resource "azurerm_kubernetes_cluster" "platform" {
     service_cidr   = "10.2.0.0/16"
     dns_service_ip = "10.2.0.10"
   }
+
   default_node_pool {
     name           = "default"
     node_count     = 1
@@ -85,6 +87,12 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
   scope                = azurerm_container_registry.platform.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_kubernetes_cluster.platform.kubelet_identity[0].object_id
+}
+
+resource "azurerm_role_assignment" "aks_network_contributor" {
+  scope                = azurerm_resource_group.platform.id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.platform.identity[0].principal_id
 }
 
 resource "azurerm_user_assigned_identity" "crossplane" {
